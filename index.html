@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nursing Entrepreneurship Mastery Quiz</title>
+<style>
+    :root {
+        --primary: #4257b2;
+        --secondary: #3ccfcf;
+        --bg: #f6f7fb;
+        --text: #333;
+        --white: #fff;
+        --wrong: #ff7b72;
+        --correct: #57d9a3;
+        --mastered: #ffc107;
+    }
+    
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+    }
+
+    .card {
+        background: var(--white);
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        width: 100%;
+        max-width: 600px;
+        text-align: center;
+    }
+
+    h1, h2 {
+        color: var(--primary);
+    }
+
+    select, button {
+        font-size: 16px;
+        padding: 10px 15px;
+        margin: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+    }
+
+    button {
+        background-color: var(--primary);
+        color: var(--white);
+        border: none;
+        cursor: pointer;
+        transition: 0.2s;
+        font-weight: bold;
+    }
+
+    button:hover {
+        background-color: #32439b;
+    }
+
+    .option-btn {
+        display: block;
+        width: 100%;
+        background-color: var(--white);
+        color: var(--text);
+        border: 2px solid #edeff4;
+        margin: 10px 0;
+        padding: 15px;
+        text-align: left;
+        border-radius: 8px;
+    }
+
+    .option-btn:hover {
+        background-color: #f6f7fb;
+        border-color: var(--primary);
+    }
+
+    .option-btn.correct {
+        background-color: var(--correct);
+        color: var(--white);
+        border-color: var(--correct);
+    }
+
+    .option-btn.wrong {
+        background-color: var(--wrong);
+        color: var(--white);
+        border-color: var(--wrong);
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .stats {
+        display: flex;
+        justify-content: space-between;
+        font-size: 14px;
+        color: #777;
+        margin-bottom: 20px;
+        font-weight: bold;
+    }
+
+    .stats span {
+        padding: 5px 10px;
+        border-radius: 5px;
+        background: #edeff4;
+    }
+</style>
+</head>
+<body>
+
+<div class="card" id="setup-screen">
+    <h1>Nursing Entrepreneurship Quiz</h1>
+    <p>Select your question set. In Mastery Mode, you must answer each question correctly <strong>twice</strong> to achieve 100% mastery, just like Quizlet.</p>
+    <select id="question-count">
+        <option value="5">5 Questions</option>
+        <option value="10">10 Questions</option>
+        <option value="all">All Questions</option>
+    </select>
+    <br>
+    <button onclick="startGame()">Start Mastery Mode</button>
+</div>
+
+<div class="card hidden" id="quiz-screen">
+    <div class="stats" id="stats-container">
+        <span id="round-text">Round: 1</span>
+        <span id="learning-text">Learning: 0</span>
+        <span id="mastered-text" style="background: var(--mastered); color: #000;">Mastered: 0</span>
+    </div>
+    <h2 id="question-text"></h2>
+    <div id="options-container"></div>
+    <button id="next-btn" class="hidden" onclick="nextQuestion()">Next</button>
+</div>
+
+<div class="card hidden" id="result-screen">
+    <h2 id="result-title"></h2>
+    <p id="result-message"></p>
+    <button id="action-btn"></button>
+</div>
+
+<script>
+    // Data bank updated to remove trailing citation markers
+    const masterBank = [
+        {
+            q: "How does an intrapreneur differ from an entrepreneur?",
+            options: [
+                "Intrapreneurs innovate within a business while remaining employees",
+                "Intrapreneurs build their own independent businesses",
+                "Intrapreneurs assume higher personal financial risk",
+                "Intrapreneurs focus exclusively on advance practice clinical skills"
+            ],
+            a: "Intrapreneurs innovate within a business while remaining employees"
+        },
+        {
+            q: "What is the dominant theme of nursing entrepreneurship?",
+            options: [
+                "Nurse control of practice and patient care",
+                "Achieving the highest possible financial return on investment",
+                "Transitioning completely away from patient contact",
+                "Lobbying for traditional hierarchical employment"
+            ],
+            a: "Nurse control of practice and patient care"
+        },
+        {
+            q: "Which historical figure is noted for establishing the first professional nursing school and implementing evidence-based practice?",
+            options: [
+                "Florence Nightingale",
+                "Mary Grant Seacole",
+                "Clara Barton",
+                "Jaime Balmores"
+            ],
+            a: "Florence Nightingale"
+        },
+        {
+            q: "Who is the Jamaican-British nurse known for establishing the British Hotel during the Crimean War and combining herbal medicine with Western practices?",
+            options: [
+                "Mary Grant Seacole",
+                "Clara Barton",
+                "Florence Nightingale",
+                "Ellen Sanders"
+            ],
+            a: "Mary Grant Seacole"
+        },
+        {
+            q: "Clara Barton is best known for founding which major humanitarian organization?",
+            options: [
+                "The American Red Cross",
+                "The International Council of Nurses",
+                "The Philippine Nurses Association",
+                "Project EntrepreNurse"
+            ],
+            a: "The American Red Cross"
+        },
+        {
+            q: "What is a major difference between Entrepreneurship and Advance Practice Nursing?",
+            options: [
+                "Entrepreneurship aims for financial profit gain through new business ideas",
+                "Advance Practice Nursing requires assuming business risks",
+                "Entrepreneurship focuses strictly on obtaining advanced clinical education",
+                "Advance Practice Nursing is done exclusively outside traditional employment"
+            ],
+            a: "Entrepreneurship aims for financial profit gain through new business ideas"
+        },
+        {
+            q: "Which Filipino nurse entrepreneur founded Brylee Care Staffing Agency in the United Kingdom?",
+            options: [
+                "Paul Zuzon",
+                "Jaime Balmores",
+                "Dan Lester Dabon",
+                "Marvin Rillo"
+            ],
+            a: "Paul Zuzon"
+        },
+        {
+            q: "What was a primary reason Project EntrepreNurse likely did not scale or continue?",
+            options: [
+                "It relied on a fragile revenue model and faced regulatory bottlenecks",
+                "There was an oversupply of experienced nurse managers",
+                "Physician groups enthusiastically took over the clinics",
+                "The DOLE secured permanent institutional funding"
+            ],
+            a: "It relied on a fragile revenue model and faced regulatory bottlenecks"
+        },
+        {
+            q: "According to the Nursing Value Chain, what are typical options for a Registered Nurse after passing the board exam?",
+            options: [
+                "Hospitalist, Practice Abroad, or Apply to Medical School",
+                "Immediately lobby the Senate for healthcare reforms",
+                "Skip clinical practice to start an HMO",
+                "Become an unregulated traditional medicine practitioner"
+            ],
+            a: "Hospitalist, Practice Abroad, or Apply to Medical School"
+        },
+        {
+            q: "What does an intrapreneurship venture look like in a nursing context?",
+            options: [
+                "A nurse-led rehabilitation unit or telephone consultation service within a hospital",
+                "A registered nurse quitting their job to open a standalone food truck",
+                "A nurse leaving healthcare to start a completely unrelated business",
+                "An independent medical transcription service outsourcing to foreign clients"
+            ],
+            a: "A nurse-led rehabilitation unit or telephone consultation service within a hospital"
+        }
+    ];
+
+    let activePool = [];
+    let activeQueue = [];
+    let currentIndex = 0;
+    let roundNumber = 1;
+
+    const screens = {
+        setup: document.getElementById('setup-screen'),
+        quiz: document.getElementById('quiz-screen'),
+        result: document.getElementById('result-screen')
+    };
+
+    function switchScreen(screenKey) {
+        Object.values(screens).forEach(s => s.classList.add('hidden'));
+        screens[screenKey].classList.remove('hidden');
+    }
+
+    function shuffleArray(array) {
+        const arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function startGame() {
+        const countVal = document.getElementById('question-count').value;
+        let shuffledBank = shuffleArray(masterBank);
+        
+        let selectedQuestions = countVal !== 'all' ? shuffledBank.slice(0, parseInt(countVal)) : shuffledBank;
+        
+        // Initialize mastery level to 0 for all selected questions
+        activePool = selectedQuestions.map(q => ({ ...q, mastery: 0 }));
+        roundNumber = 1;
+        
+        startRound();
+    }
+
+    function startRound() {
+        // Filter questions that haven't reached mastery level 2
+        activeQueue = shuffleArray(activePool.filter(q => q.mastery < 2));
+        currentIndex = 0;
+
+        if (activeQueue.length === 0) {
+            handleCompleteMastery();
+        } else {
+            switchScreen('quiz');
+            renderQuestion();
+        }
+    }
+
+    function updateStats() {
+        const masteredCount = activePool.filter(q => q.mastery === 2).length;
+        const learningCount = activePool.filter(q => q.mastery > 0 && q.mastery < 2).length;
+        
+        document.getElementById('round-text').innerText = `Round: ${roundNumber}`;
+        document.getElementById('learning-text').innerText = `Learning: ${learningCount}`;
+        document.getElementById('mastered-text').innerText = `Mastered: ${masteredCount} / ${activePool.length}`;
+    }
+
+    function renderQuestion() {
+        document.getElementById('next-btn').classList.add('hidden');
+        updateStats();
+        
+        const qText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const currentQ = activeQueue[currentIndex];
+        
+        qText.innerText = currentQ.q;
+        optionsContainer.innerHTML = '';
+        
+        const shuffledOptions = shuffleArray(currentQ.options);
+        
+        shuffledOptions.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(btn, opt, currentQ);
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(clickedBtn, selected, currentQ) {
+        const buttons = document.querySelectorAll('.option-btn');
+        buttons.forEach(btn => {
+            btn.disabled = true;
+            if (btn.innerText === currentQ.a) {
+                btn.classList.add('correct');
+            }
+        });
+
+        if (selected === currentQ.a) {
+            // Increase mastery upon correct answer
+            currentQ.mastery += 1;
+        } else {
+            // Reset mastery to 0 if wrong
+            clickedBtn.classList.add('wrong');
+            currentQ.mastery = 0;
+        }
+
+        document.getElementById('next-btn').classList.remove('hidden');
+        updateStats();
+    }
+
+    function nextQuestion() {
+        currentIndex++;
+        if (currentIndex < activeQueue.length) {
+            renderQuestion();
+        } else {
+            // End of round, check if another round is needed
+            const remaining = activePool.filter(q => q.mastery < 2).length;
+            if (remaining > 0) {
+                switchScreen('result');
+                document.getElementById('result-title').innerText = "Keep Going!";
+                document.getElementById('result-message').innerText = `You have ${remaining} questions left to master.`;
+                
+                const btn = document.getElementById('action-btn');
+                btn.innerText = "Start Next Round";
+                btn.onclick = () => {
+                    roundNumber++;
+                    startRound();
+                };
+            } else {
+                startRound(); // Will trigger handleCompleteMastery()
+            }
+        }
+    }
+
+    function handleCompleteMastery() {
+        switchScreen('result');
+        document.getElementById('result-title').innerText = "100% Mastery Achieved! 🎉";
+        document.getElementById('result-message').innerText = "You have successfully answered every question correctly twice, proving full mastery of the content.";
+        
+        const btn = document.getElementById('action-btn');
+        btn.innerText = "Start New Game";
+        btn.onclick = () => switchScreen('setup');
+    }
+</script>
+
+</body>
+</html>
